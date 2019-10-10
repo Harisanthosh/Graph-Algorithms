@@ -57,10 +57,8 @@ class HelloWorldExample(object):
 
     @staticmethod
     def _get_centrality(tx):
-        rxx = tx.run("CALL algo.degree.stream(null, 'MANAGED_BY', {direction: 'incoming'})"
-                     "YIELD nodeId, score"
-                     "RETURN algo.asNode(nodeId).name AS name, score AS clients"
-                     "ORDER BY clients DESC")
+        rxx = tx.run("CALL algo.degree.stream(null, $relation, {direction: $direct})"
+                     "YIELD nodeId, score", relation="MANAGED_BY", direct="incoming")
         return rxx
 
 cx = HelloWorldExample("bolt://localhost:7687","neo4j","123graph")
