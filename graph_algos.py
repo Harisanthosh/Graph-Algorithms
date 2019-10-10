@@ -1,6 +1,17 @@
+"""
+ Program to load the entries from Oracle DB and display it in GUI
+"""
+from fastapi import FastAPI, File, Form, UploadFile
+import csv, ast
+import pandas as pd
+import sys
+import datetime
 from neo4j import GraphDatabase
 
-class HelloWorldExample(object):
+
+app = FastAPI(title="Graph Algorithms", description="Create and execute graph algorithms in neo4j")
+
+class GraphAlgorithms(object):
 
     def __init__(self, uri, user, password):
         self._driver = GraphDatabase.driver(uri, auth=(user, password))
@@ -24,13 +35,17 @@ class HelloWorldExample(object):
             for item in gnodes:
                 print(f'{item}')
             print(gnodes)
+            return gnodes
 
-    def get_degree_centrality(self):
+    def get_closeness_centrality(self):
         with self._driver.session() as session:
             gnodes = session.write_transaction(self._get_centrality)
+            lst = []
             for item in gnodes:
                 print(f'{item}')
+                lst.append(item)
             print(gnodes)
+            return lst
 
     @staticmethod
     def _create_and_return_greeting(tx, message,name,weightclass):
@@ -51,53 +66,55 @@ class HelloWorldExample(object):
 
     @staticmethod
     def _get_greetings(tx):
-        rxx = tx.run("MATCH (n:Greeting)"
+        rxx = tx.run("MATCH (n:Node)"
                      "RETURN n LIMIT 25")
         return rxx
 
     # @staticmethod
     # def _get_centrality(tx):
-    #     rxx = tx.run("CALL algo.degree.stream(null, $relation, {direction: $direct})"
-    #                  "YIELD nodeId, score", relation="MANAGED_BY", direct="incoming")
+    #     rxx = tx.run("CALL algo.closeness.stream('Node', 'LINK')"
+    #                  "YIELD nodeId, centrality"
+    #                  ""
+    #                  "RETURN algo.asNode(nodeId).id AS node, centrality"
+    #                  "ORDER BY centrality DESC"
+    #                  "LIMIT 20;")
     #     return rxx
 
     @staticmethod
     def _get_centrality(tx):
-        rxx = tx.run("CALL algo.degree.stream($label, $relation, {direction: $direct})"
-                     "YIELD nodeId, score", label="Agent", relation="MANAGED_BY", direct="incoming")
+        rxx = tx.run("CALL algo.closeness.stream('Node', 'LINK')"
+                     "YIELD nodeId, centrality")
         return rxx
 
-cx = HelloWorldExample("bolt://localhost:7687","neo4j","123graph")
-#cx.print_greeting("Champion","Nate Diaz","165lbs")
-#cx.print_manager("Manager","Audie Attar")
-cx.get_greetings()
-cx.get_degree_centrality()
+@app.post("/files/")
+async def upload_result(
+    fileb: UploadFile = File(...)
+):
+    return {
+        # "file_size": len(fileb.file.read()),
+        "fileb_content_type": fileb.content_type,
+    }
+
+@app.delete("/files/{table}")
+def remove_table(table: str):
+    return {"Hello": table}
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
+# @app.get("/items/{item_id}")
+# def read_item(item_id: int, q: str = None):
+#     return {"item_id": item_id, "q": q}
+
+@app.get("/getnodes")
+def get_nodes_from_graph():
+    cx = GraphAlgorithms("bolt://localhost:7687", "neo4j", "123graph")
+    return cx.get_greetings()
 
 
+@app.get("/getcentrality")
+def get_centrality_of_graph():
+    cx = GraphAlgorithms("bolt://localhost:7687", "neo4j", "123graph")
+    return cx.get_closeness_centrality()
 
-"""
-For Establishing Relations
-MATCH (n:Greeting {name:"Khabib"}) 
-MATCH (t:Greeting {name:"Kamaru Usman"})
-CREATE (n)-[r:MANAGED_BY {agent:"Ali abdelaziz"}]->(t)
-RETURN n,r,t
-
-MATCH (n:Greeting {name:"John Jones"}) 
-MATCH (t:Agent {name:"Ali Abdelaziz"})
-CREATE (n)-[r:MANAGED_BY]->(t)
-RETURN n,r,t
-
-For Delete
-MATCH (p:Person) where ID(p)=1
-OPTIONAL MATCH (p)-[r]-() //drops p's relations
-DELETE r,p
-
-MATCH ()-[r:RELEASED]-() 
-DELETE r
-
-Degree Centrality Theorem
-CALL algo.degree.stream("", "MANAGED_BY", {direction: "incoming"})
-YIELD nodeId, score
-RETURN algo.asNode(nodeId).name AS name, score AS clients
-ORDER BY clients DESC
-"""
