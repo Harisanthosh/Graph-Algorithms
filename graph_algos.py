@@ -46,15 +46,24 @@ class GraphAlgorithms(object):
             print(gnodes)
             return gnodes
 
+    # def get_closeness_centrality(self):
+    #     with self._driver.session() as session:
+    #         gnodes = session.write_transaction(self._get_centrality)
+    #         lst = []
+    #         for item in gnodes:
+    #             print(f'{item}')
+    #             lst.append(item)
+    #         print(gnodes)
+    #         return lst
+
     def get_closeness_centrality(self):
         with self._driver.session() as session:
-            gnodes = session.write_transaction(self._get_centrality)
-            lst = []
-            for item in gnodes:
-                print(f'{item}')
-                lst.append(item)
-            print(gnodes)
-            return lst
+            G = nxneo4j.Graph(self._driver, config)
+            sorted_cc = sorted(nxneo4j.centrality.closeness_centrality(G, wf_improved=False).items(),
+                               key=lambda x: x[1], reverse=True)
+            for name, score in sorted_cc[:10]:
+                print(name, score)
+            return sorted_cc
 
     def get_page_rank(self):
         with self._driver.session() as session:
@@ -63,6 +72,27 @@ class GraphAlgorithms(object):
             for name, score in sorted_pagerank[:10]:
                 print(name, score)
             return sorted_pagerank
+
+    def get_betweenness_centrality(self):
+        with self._driver.session() as session:
+            G = nxneo4j.Graph(self._driver, config)
+            sorted_bw = sorted(nxneo4j.centrality.betweenness_centrality(G).items(), key=lambda x: x[1], reverse=True)
+            for name, score in sorted_bw[:10]:
+                print(name, score)
+            return sorted_bw
+
+    def get_harmonic_centrality(self):
+        with self._driver.session() as session:
+            G = nxneo4j.Graph(self._driver, config)
+            sorted_hc = sorted(nxneo4j.centrality.harmonic_centrality(G).items(), key=lambda x: x[1], reverse=True)
+            for name, score in sorted_hc[:10]:
+                print(name, score)
+            return sorted_hc
+
+    def get_shortest_path(self, p1, p2):
+        with self._driver.session() as session:
+            G = nxneo4j.Graph(self._driver, config)
+            return nxneo4j.path_finding.shortest_path(G, p1, p2)
 
     @staticmethod
     def _create_and_return_greeting(tx, message,name,weightclass):
@@ -131,7 +161,7 @@ def get_nodes_from_graph():
 
 
 @app.get("/getcentrality")
-def get_centrality_of_graph():
+def get_closeness_centrality_of_graph():
     cx = GraphAlgorithms("bolt://localhost:7687", "neo4j", "123graph")
     return cx.get_closeness_centrality()
 
@@ -139,3 +169,18 @@ def get_centrality_of_graph():
 def get_rank_of_graph():
     cx = GraphAlgorithms("bolt://localhost:7687", "neo4j", "123graph")
     return cx.get_page_rank()
+
+@app.get("/betweennesscentrality")
+def get_betweeness_centrality_of_graph():
+    cx = GraphAlgorithms("bolt://localhost:7687", "neo4j", "123graph")
+    return cx.get_betweenness_centrality()
+
+@app.get("/harmoniccentrality")
+def get_harmonic_centrality_of_graph():
+    cx = GraphAlgorithms("bolt://localhost:7687", "neo4j", "123graph")
+    return cx.get_harmonic_centrality()
+
+@app.get("/shortestpath")
+def get_shortest_path_between_two_nodes(p1: str,p2: str):
+    cx = GraphAlgorithms("bolt://localhost:7687", "neo4j", "123graph")
+    return cx.get_shortest_path(p1,p2)
