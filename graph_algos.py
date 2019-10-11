@@ -24,10 +24,11 @@ class GraphAlgorithms(object):
             greeting = session.write_transaction(self._create_and_return_greeting, message,name,weightclass)
             print(greeting)
 
-    def print_manager(self, message,name):
+    def create_graph(self, message):
         with self._driver.session() as session:
-            greeting = session.write_transaction(self._create_manager, message,name)
+            greeting = session.write_transaction(self._create_manager, message)
             print(greeting)
+            return greeting
 
     def get_greetings(self):
         with self._driver.session() as session:
@@ -57,12 +58,10 @@ class GraphAlgorithms(object):
         return result.single()[0]
 
     @staticmethod
-    def _create_manager(tx, message, name):
-        result = tx.run("CREATE (a:Agent) "
-                        "SET a.message = $message "
-                        "SET a.name = $name "
-                        "RETURN a.message + ', from node ' + id(a)", message=message, name=name)
-        return result.single()[0]
+    def _create_manager(tx, message):
+        result = tx.run(message)
+        return result
+        #return result.single()[0]
 
     @staticmethod
     def _get_greetings(tx):
@@ -95,17 +94,19 @@ async def upload_result(
         "fileb_content_type": fileb.content_type,
     }
 
-@app.delete("/files/{table}")
-def remove_table(table: str):
-    return {"Hello": table}
+# @app.delete("/files/{table}")
+# def remove_table(table: str):
+#     return {"Hello": table}
 
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
 
-# @app.get("/items/{item_id}")
-# def read_item(item_id: int, q: str = None):
-#     return {"item_id": item_id, "q": q}
+@app.post("/createnodes/{graph_query}")
+def create_graph(graph_query: str):
+    cx = GraphAlgorithms("bolt://localhost:7687", "neo4j", "123graph")
+    return cx.create_graph(graph_query)
+    #return {"item_id": item_id, "q": q}
 
 @app.get("/getnodes")
 def get_nodes_from_graph():
