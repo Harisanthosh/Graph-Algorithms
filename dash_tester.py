@@ -4,6 +4,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
 import requests
+import json
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -26,6 +27,16 @@ def generate_table(dataframe, max_rows=10):
         ]) for i in range(min(len(dataframe), max_rows))]
     )
 
+def generate_json_table(jsondata, max_rows=10):
+    return html.Table(
+        # Header
+        [html.Tr([html.Th(val) for key,val in jsondata.items()])]
+
+        # Body
+        # [html.Tr([
+        #     html.Td(jsondata[i][val]) for key,val in jsondata.items()
+        # ]) for i in range(min(len(jsondata), max_rows))]
+    )
 app.layout = html.Div(children=[
     html.H1(children='Neo4j & Dash'),
 
@@ -54,13 +65,16 @@ app.layout = html.Div(children=[
 
 @app.callback(dash.dependencies.Output('load_div','children'),[dash.dependencies.Input('button_neo', 'n_clicks')])
 def update_output(n_clicks):
-    print(f'The button was clicked ${n_clicks} times')
+    print(f'The button was clicked {n_clicks} times')
     resp = requests.get('http://localhost:8000/getrank').json()
     print(resp)
-    return 'The button was clicked {} times and the response is {}'.format(
-        n_clicks,
-        resp
-    )
+    respjson = pd.DataFrame(resp)
+    print(respjson)
+    # return 'The button was clicked {} times and the response is {}'.format(
+    #     n_clicks,
+    #     generate_table(respjson)
+    # )
+    return generate_table(respjson)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
