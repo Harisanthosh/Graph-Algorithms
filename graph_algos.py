@@ -7,9 +7,17 @@ import pandas as pd
 import sys
 import datetime
 from neo4j import GraphDatabase
+import nxneo4j
 
 
 app = FastAPI(title="Graph Algorithms", description="Create and execute graph algorithms in neo4j")
+
+config = {
+    "node_label": "Paper",
+    "relationship_type": None,
+    "identifier_property": "name"
+}
+
 
 class GraphAlgorithms(object):
 
@@ -47,6 +55,14 @@ class GraphAlgorithms(object):
                 lst.append(item)
             print(gnodes)
             return lst
+
+    def get_page_rank(self):
+        with self._driver.session() as session:
+            G = nxneo4j.Graph(self._driver, config)
+            sorted_pagerank = sorted(nxneo4j.centrality.pagerank(G).items(), key=lambda x: x[1], reverse=True)
+            for name, score in sorted_pagerank[:10]:
+                print(name, score)
+            return sorted_pagerank
 
     @staticmethod
     def _create_and_return_greeting(tx, message,name,weightclass):
@@ -119,3 +135,7 @@ def get_centrality_of_graph():
     cx = GraphAlgorithms("bolt://localhost:7687", "neo4j", "123graph")
     return cx.get_closeness_centrality()
 
+@app.get("/getrank")
+def get_rank_of_graph():
+    cx = GraphAlgorithms("bolt://localhost:7687", "neo4j", "123graph")
+    return cx.get_page_rank()
