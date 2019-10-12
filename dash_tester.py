@@ -56,17 +56,38 @@ app.layout = html.Div(children=[
             }
         }
     ),
-    html.H4(children='US Agriculture Exports (2011)'),
-    generate_table(df),
-    html.Button('Run Neo4j', id='button_neo'),
+    # html.H4(children='US Agriculture Exports (2011)'),
+    # generate_table(df),
+    dcc.Dropdown(
+            id='my-dropdown',
+            options=[
+                {'label': 'Page Rank Algorithm', 'value': 'PR'},
+                {'label': 'Closeness Centrality', 'value': 'CR'},
+                {'label': 'Betweenness Centrality', 'value': 'BR'},
+                {'label': 'Harmonic Centrality', 'value': 'HR'}
+            ],
+            value='PR'
+        ),
+    html.Button('Test Neo4j', id='button_neo'),
     html.Div(id="load_div", children='loading..')
 
 ])
 
-@app.callback(dash.dependencies.Output('load_div','children'),[dash.dependencies.Input('button_neo', 'n_clicks')])
-def update_output(n_clicks):
-    print(f'The button was clicked {n_clicks} times')
-    resp = requests.get('http://localhost:8000/getrank').json()
+@app.callback(dash.dependencies.Output('load_div','children'),[dash.dependencies.Input('my-dropdown', 'value'),dash.dependencies.Input('button_neo', 'n_clicks')])
+def update_output(value, n_clicks):
+    # value = dash.dependencies.Input('my-dropdown', 'value')
+    print(f'The button was clicked {n_clicks} times and the algorithm selected is {value}')
+    if (value == "PR"):
+        resp = requests.get('http://localhost:8000/getrank').json()
+    elif (value == "CR"):
+        resp = requests.get('http://localhost:8000/getcentrality').json()
+    elif (value == "BR"):
+        resp = requests.get('http://localhost:8000/betweennesscentrality').json()
+    elif (value == "HR"):
+        resp = requests.get('http://localhost:8000/harmoniccentrality').json()
+    else:
+        resp = requests.get('http://localhost:8000/getrank').json()
+
     print(resp)
     respjson = pd.DataFrame(resp)
     print(respjson)
