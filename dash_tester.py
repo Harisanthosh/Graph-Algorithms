@@ -10,6 +10,11 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
+colors = {
+    'background': '#111111',
+    'text': '#7FDBFF'
+}
+
 df = pd.read_csv(
     'https://gist.githubusercontent.com/chriddyp/'
     'c78bf172206ce24f77d6363a2d754b59/raw/'
@@ -37,29 +42,34 @@ def generate_json_table(jsondata, max_rows=10):
         #     html.Td(jsondata[i][val]) for key,val in jsondata.items()
         # ]) for i in range(min(len(jsondata), max_rows))]
     )
-app.layout = html.Div(children=[
+app.layout = html.Div(style={'backgroundColor': colors['background'],'color': colors['text'], 'textAlign': 'center'},children=[
+    html.Img(src=app.get_asset_url('emden_leer.png'),style={
+                'height': '50%',
+                'width': '50%'
+            }),
     html.H1(children='Neo4j & Dash'),
 
     html.Div(children='''
         NeoDash: A web application framework for Python customized for Python and Neo4j.
     '''),
-
-    dcc.Graph(
-        id='example-graph',
-        figure={
-            'data': [
-                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
-                {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': u'Montréal'},
-            ],
-            'layout': {
-                'title': 'Dash Data Visualization'
-            }
-        }
-    ),
+    html.Br(),
+    # dcc.Graph(
+    #     id='example-graph',
+    #     figure={
+    #         'data': [
+    #             {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+    #             {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': u'Montréal'},
+    #         ],
+    #         'layout': {
+    #             'title': 'Dash Data Visualization'
+    #         }
+    #     }
+    # ),
     # html.H4(children='US Agriculture Exports (2011)'),
     # generate_table(df),
     dcc.Dropdown(
             id='my-dropdown',
+            style={'color': '#D4AF37'},
             options=[
                 {'label': 'Page Rank Algorithm', 'value': 'PR'},
                 {'label': 'Closeness Centrality', 'value': 'CR'},
@@ -68,8 +78,10 @@ app.layout = html.Div(children=[
             ],
             value='PR'
         ),
-    html.Button('Test Neo4j', id='button_neo'),
-    html.Div(id="load_div", children='loading..')
+    html.Br(),
+    html.Button('Test Neo4j', id='button_neo',style={'color': '#D4AF37'}),
+    html.Br(),
+    html.Div(style={'textAlign': 'center'},id="load_div", children='loading..')
 
 ])
 
